@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("KPM_DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String   @unique
+  password   String
+  createdAt  DateTime @default(now())
+  verifyHash String?
+  verified   Boolean  @default(false)
+
+  accessTokens AccessToken[]
+  packages     Package[]
+}
+
+model AccessToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  generator String?
+}
+
+model Package {
+  id     String @id @default(uuid()) @db.Uuid
+  name   String @unique
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id])
+
+  releases Release[]
+}
+
+model Release {
+  id        String  @id @default(uuid()) @db.Uuid
+  version   String
+  hash      String
+  url       String
+  packageId String  @db.Uuid
+  package   Package @relation(fields: [packageId], references: [id])
+
+  @@unique([packageId, version])
+}
