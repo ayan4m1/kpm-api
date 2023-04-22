@@ -40,12 +40,12 @@ model Package {
 }
 
 model Release {
-  id        String  @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
   version   String
   hash      String
   url       String
-  packageId String  @db.Uuid
-  package   Package @relation(fields: [packageId], references: [id])
+  packageId String   @db.Uuid
+  package   Package  @relation(fields: [packageId], references: [id])
   createdAt DateTime @default(now())
 
   @@unique([packageId, version])
