@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+
+config();
 
 interface LogConfig {
   level?: string;
