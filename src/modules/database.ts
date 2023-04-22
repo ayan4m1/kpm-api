@@ -6,7 +6,7 @@ import { omit, omitEach } from './utils';
 const log = getLogger('db');
 const prisma = new PrismaClient();
 
-export const getPackages = async (name?: string, author?: string) => {
+export async function getPackages(name?: string, author?: string) {
   try {
     const where: Prisma.PackageWhereInput = {};
 
@@ -45,9 +45,13 @@ export const getPackages = async (name?: string, author?: string) => {
     log.error(error.message);
     log.error(error.stack);
   }
-};
+}
 
-export const getPackage = async (name: string, allReleases = false) => {
+export async function getPackage(
+  name?: string,
+  uuid?: string,
+  allReleases = false
+) {
   try {
     const pkg = await prisma.package.findUnique({
       include: {
@@ -55,7 +59,8 @@ export const getPackage = async (name: string, allReleases = false) => {
         releases: true
       },
       where: {
-        name
+        name: name ? name : undefined,
+        id: uuid ? uuid : undefined
       }
     });
 
@@ -78,4 +83,4 @@ export const getPackage = async (name: string, allReleases = false) => {
     log.error(error.message);
     log.error(error.stack);
   }
-};
+}
