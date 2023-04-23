@@ -1,4 +1,3 @@
-import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 import autoExternal from 'rollup-plugin-auto-external';
 
@@ -12,7 +11,6 @@ export default {
     autoExternal({
       builtins: true
     }),
-    typescript(),
-    terser()
+    typescript()
   ]
 };
