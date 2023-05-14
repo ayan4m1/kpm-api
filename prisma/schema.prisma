@@ -8,16 +8,14 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  username   String   @unique
-  email      String   @unique
-  password   String
-  createdAt  DateTime @default(now())
-  verifyHash String?
-  verified   Boolean  @default(false)
+  id        String   @id @default(uuid()) @db.Uuid
+  githubId  String   @unique @db.VarChar(256)
+  username  String   @unique @db.VarChar(256)
+  email     String   @unique @db.VarChar(256)
+  createdAt DateTime @default(now())
 
-  accessTokens AccessToken[]
   packages     Package[]
+  accessTokens AccessToken[]
 }
 
 model AccessToken {
@@ -25,14 +23,13 @@ model AccessToken {
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id])
   token     String   @unique
-  createdAt DateTime @default(now())
   expiresAt DateTime
   generator String?
 }
 
 model Package {
   id     String @id @default(uuid()) @db.Uuid
-  name   String @unique
+  name   String @unique @db.VarChar(256)
   userId String @db.Uuid
   user   User   @relation(fields: [userId], references: [id])
 
@@ -41,9 +38,9 @@ model Package {
 
 model Release {
   id        String   @id @default(uuid()) @db.Uuid
-  version   String
-  hash      String
-  url       String
+  version   String   @db.VarChar(256)
+  hash      String   @db.VarChar(64)
+  url       String   @db.VarChar(512)
   packageId String   @db.Uuid
   package   Package  @relation(fields: [packageId], references: [id])
   createdAt DateTime @default(now())

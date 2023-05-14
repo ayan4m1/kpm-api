@@ -1,51 +1,126 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { addMinutes } from 'date-fns';
+import { AccessToken, Prisma, PrismaClient, User } from '@prisma/client';
+import { addSeconds, isAfter } from 'date-fns';
 
 import { token as tokenConfig } from './config';
 import { getLogger } from './logging';
 import { omit, omitEach } from './utils';
-import { compare, hash } from 'bcrypt';
 
 const log = getLogger('db');
 const prisma = new PrismaClient();
 
-export async function generateAccessToken(user: User, generator: string) {
+export async function validateAccessToken(token: string): Promise<User> {
   try {
-    const token = await hash(user.id, tokenConfig.saltRounds);
-
-    await prisma.accessToken.create({
-      data: {
-        token,
-        generator,
-        expiresAt: addMinutes(Date.now(), tokenConfig.lifetimeMins),
-        userId: user.id
-      }
-    });
-  } catch (error) {
-    log.error(error.message);
-    log.error(error.stack);
-  }
-}
-
-export async function validateAccessToken(token: string): Promise<boolean> {
-  try {
-    const result = await prisma.accessToken.findUnique({
+    const { expiresAt, user } = await prisma.accessToken.findUnique({
       where: {
         token
+      },
+      include: {
+        user: true
       }
     });
 
-    if (!result) {
-      return false;
+    if (isAfter(Date.now(), expiresAt)) {
+      throw new Error('Expired token!');
     }
 
-    return await compare(token, result.userId);
+    return user;
   } catch (error) {
     log.error(error.message);
     log.error(error.stack);
   }
 
-  return false;
+  return null;
+}
+
+export function getAccessToken(userId: string) {
+  return prisma.accessToken.findFirst({
+    where: {
+      expiresAt: {
+        lte: new Date()
+      },
+      userId
+    },
+    orderBy: {
+      expiresAt: 'desc'
+    }
+  });
+}
+
+export async function checkAccessToken(token: string): Promise<boolean> {
+  const accessToken = await prisma.accessToken.findUnique({
+    where: {
+      token
+    }
+  });
+
+  // todo: expiration check
+
+  return Boolean(accessToken);
+}
+
+export function createAccessToken(
+  userId: string,
+  token: string,
+  expiresIn: number
+): Promise<AccessToken> {
+  return prisma.accessToken.create({
+    data: {
+      token,
+      userId,
+      generator: 'GitHub',
+      expiresAt: addSeconds(Date.now(), expiresIn)
+    }
+  });
+}
+
+export function createUser(
+  githubId: string,
+  username: string,
+  email: string
+): Promise<User> {
+  return prisma.user.create({
+    data: {
+      githubId,
+      username,
+      email
+    }
+  });
+}
+
+export function updateUser(
+  githubId: string,
+  username: string,
+  email: string
+): Promise<User> {
+  return prisma.user.update({
+    where: {
+      githubId
+    },
+    data: {
+      username,
+      email
+    }
+  });
+}
+
+export function getUser(githubId: string): Promise<User> {
+  try {
+    return prisma.user.findUnique({
+      select: {
+        id: true,
+        githubId: true,
+        email: true,
+        username: true,
+        createdAt: true
+      },
+      where: {
+        githubId
+      }
+    });
+  } catch (error) {
+    log.error(error.message);
+    log.error(error.stack);
+  }
 }
 
 export async function getPackages(name?: string, author?: string) {
@@ -74,13 +149,7 @@ export async function getPackages(name?: string, author?: string) {
 
     return packages.map((pkg) => ({
       ...omit(pkg, ['userId']),
-      user: omit(pkg.user, [
-        'password',
-        'email',
-        'verified',
-        'verifyHash',
-        'createdAt'
-      ]),
+      user: omit(pkg.user, ['email', 'createdAt']),
       releases: omitEach(pkg.releases, ['hash'])
     }));
   } catch (error) {
@@ -112,13 +181,7 @@ export async function getPackage(
 
     return {
       ...omit(pkg, ['userId']),
-      user: omit(pkg.user, [
-        'password',
-        'email',
-        'verified',
-        'verifyHash',
-        'createdAt'
-      ]),
+      user: omit(pkg.user, ['email', 'createdAt']),
       releases: omitEach(pkg.releases, ['hash'])
     };
   } catch (error) {

@@ -11,9 +11,20 @@ interface HttpConfig {
   port: number;
 }
 
+interface AuthConfig {
+  uiUrl: string;
+}
+
 interface TokenConfig {
   saltRounds: number;
   lifetimeMins: number;
+}
+
+interface GithubConfig {
+  clientId: string;
+  clientSecret: string;
+  callbackUrl: string;
+  retries: number;
 }
 
 export const logging: LogConfig = {
@@ -28,4 +39,15 @@ export const http: HttpConfig = {
 export const token: TokenConfig = {
   saltRounds: parseInt(process.env.KPM_TOKEN_ROUNDS || '8', 10),
   lifetimeMins: parseInt(process.env.KPM_TOKEN_LIFETIME_MINS || '20', 10)
+};
+
+export const auth: AuthConfig = {
+  uiUrl: process.env.KPM_UI_URL
+};
+
+export const github: GithubConfig = {
+  clientId: process.env.KPM_GH_CLIENT_ID,
+  clientSecret: process.env.KPM_GH_CLIENT_SECRET,
+  callbackUrl: process.env.KPM_GH_CALLBACK_URL,
+  retries: parseInt(process.env.KPM_GH_RETRIES || '10', 10)
 };

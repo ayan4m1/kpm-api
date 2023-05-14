@@ -57,7 +57,7 @@ export function throwOnValidateError(
  * @param res Response
  * @param next Callback
  */
-export function checkAuthorization(
+/*export function checkAuthorization(
   req: Request,
   res: Response,
   next: NextFunction
@@ -75,7 +75,7 @@ export function checkAuthorization(
   }
 
   next();
-}
+}*/
 
 /**
  * Applied validation rules for package names.

@@ -7,6 +7,7 @@ import {
   validatePackageName,
   validateUsername
 } from '../modules/utils';
+import { passport } from './auth';
 
 export function registerPackageRoutes(app: Express) {
   app.get(
@@ -68,5 +69,9 @@ export function registerPackageRoutes(app: Express) {
     }
   );
 
-  app.put('/package', validatePackageName(body('package_name')));
+  app.put(
+    '/package',
+    passport.authenticate('github', { failureRedirect: '/auth' }),
+    validatePackageName(body('package_name'))
+  );
 }
