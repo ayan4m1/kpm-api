@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult, ValidationChain } from 'express-validator';
-import { validateAccessToken } from './database';
 
 /**
  * Omit the specified array of keys from the specified object.
@@ -50,32 +49,6 @@ export function throwOnValidateError(
 
   next();
 }
-
-/**
- * Express middleware which returns HTTP 401/403 if a valid token is not present in the Authorization header.
- * @param req Request
- * @param res Response
- * @param next Callback
- */
-/*export function checkAuthorization(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
-  if (!req.headers.authorization) {
-    res.sendStatus(401);
-    return;
-  }
-
-  const token = req.headers.authorization.replace(/^Bearer\s+/, '');
-
-  if (!validateAccessToken(token)) {
-    res.sendStatus(403);
-    return;
-  }
-
-  next();
-}*/
 
 /**
  * Applied validation rules for package names.

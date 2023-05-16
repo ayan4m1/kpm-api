@@ -1,13 +1,13 @@
 import { Express, Request, Response } from 'express';
 import { query, param, body } from 'express-validator';
 
+import { authenticate } from '../modules/auth';
 import { getPackages, getPackage } from '../modules/database';
 import {
   throwOnValidateError,
   validatePackageName,
   validateUsername
 } from '../modules/utils';
-import { passport } from './auth';
 
 export function registerPackageRoutes(app: Express) {
   app.get(
@@ -71,7 +71,7 @@ export function registerPackageRoutes(app: Express) {
 
   app.put(
     '/package',
-    passport.authenticate('github', { failureRedirect: '/auth' }),
+    authenticate({ failureRedirect: '/auth' }),
     validatePackageName(body('package_name'))
   );
 }

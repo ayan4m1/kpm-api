@@ -4,7 +4,9 @@
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/bcrypt": "^5.0.0",
+    "@types/connect-pg-simple": "^7.0.0",
     "@types/express": "^4.17.17",
+    "@types/express-session": "^1.17.7",
     "@types/jest": "^29.4.0",
     "@types/node": "^18.14.1",
     "@types/passport-github2": "^1.2.5",
@@ -32,10 +34,10 @@
   ],
   "license": "MIT",
   "module": "lib/index.js",
-  "name": "kpm-api",
+  "name": "@kicad/api",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ayan4m1/minestat-es"
+    "url": "https://github.com/kicad-package-manager/kpm-api"
   },
   "scripts": {
     "build": "rollup -c --configPlugin typescript",

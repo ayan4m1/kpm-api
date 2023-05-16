@@ -1,12 +1,13 @@
 import { Express, Response } from 'express';
-// import { passport } from './auth';
+
+import { authenticate } from '../modules/auth';
 
 export function registerUserRoutes(app: Express) {
   app.get(
     '/user',
-    // passport.authenticate('github', { failWithError: true }),
+    authenticate({ failWithError: true }),
     (_, res: Response) => {
-      res.send('sup bitch');
+      res.send('sup bitch').end();
     }
   );
 }
