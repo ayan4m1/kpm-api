@@ -34,7 +34,6 @@ export function registerAuthRoutes(app: Express) {
             result.expiresAt
           )}`
         );
-        // res.redirect('http://localhost:5005/');
       }
     }
   );

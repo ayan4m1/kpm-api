@@ -1,4 +1,3 @@
-import { Express } from 'express';
 import { formatISO, parseISO } from 'date-fns';
 import { Strategy as GithubStrategy, Profile } from 'passport-github2';
 import { Passport, AuthenticateCallback, AuthenticateOptions } from 'passport';

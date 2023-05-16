@@ -29,8 +29,11 @@ interface GithubConfig {
 
 interface SessionConfig {
   secret: string;
-  connectionString: string;
   maxCookieAgeHours: number;
+}
+
+interface DatabaseConfig {
+  connectionString: string;
 }
 
 export const logging: LogConfig = {
@@ -60,9 +63,12 @@ export const github: GithubConfig = {
 
 export const session: SessionConfig = {
   secret: process.env.KPM_SESSION_SECRET,
-  connectionString: process.env.KPM_SESSION_CONNECTION_STRING,
   maxCookieAgeHours: parseInt(
     process.env.KPM_SESSION_MAX_COOKIE_AGE_HOURS ?? '24',
     10
   )
+};
+
+export const database: DatabaseConfig = {
+  connectionString: process.env.KPM_DB_CONNECTION_STRING
 };

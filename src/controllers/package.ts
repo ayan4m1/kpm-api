@@ -25,15 +25,7 @@ export function registerPackageRoutes(app: Express) {
         return res.sendStatus(500);
       }
 
-      const statusCode = packages.length ? 200 : 204;
-
-      res.status(statusCode);
-
-      if (packages.length) {
-        res.json(packages);
-      }
-
-      res.end();
+      res.json(packages).end();
     }
   );
 

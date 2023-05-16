@@ -1,36 +1,11 @@
 import { AccessToken, Prisma, PrismaClient, User } from '@prisma/client';
 import { addSeconds, isAfter } from 'date-fns';
 
-import { token as tokenConfig } from './config';
 import { getLogger } from './logging';
 import { omit, omitEach } from './utils';
 
 const log = getLogger('db');
 const prisma = new PrismaClient();
-
-export async function validateAccessToken(token: string): Promise<User> {
-  try {
-    const { expiresAt, user } = await prisma.accessToken.findUnique({
-      where: {
-        token
-      },
-      include: {
-        user: true
-      }
-    });
-
-    if (isAfter(Date.now(), expiresAt)) {
-      throw new Error('Expired token!');
-    }
-
-    return user;
-  } catch (error) {
-    log.error(error.message);
-    log.error(error.stack);
-  }
-
-  return null;
-}
 
 export function getAccessToken(userId: string) {
   return prisma.accessToken.findFirst({
@@ -53,7 +28,14 @@ export async function checkAccessToken(token: string): Promise<boolean> {
     }
   });
 
-  // todo: expiration check
+  if (Boolean(accessToken) && isAfter(Date.now(), accessToken.expiresAt)) {
+    await prisma.accessToken.delete({
+      where: {
+        token
+      }
+    });
+    return false;
+  }
 
   return Boolean(accessToken);
 }

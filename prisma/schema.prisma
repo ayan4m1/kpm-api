@@ -28,10 +28,12 @@ model AccessToken {
 }
 
 model Package {
-  id     String @id @default(uuid()) @db.Uuid
-  name   String @unique @db.VarChar(256)
-  userId String @db.Uuid
-  user   User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(256)
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 
   releases Release[]
 }
@@ -39,11 +41,12 @@ model Package {
 model Release {
   id        String   @id @default(uuid()) @db.Uuid
   version   String   @db.VarChar(256)
-  hash      String   @db.VarChar(64)
+  hash      String   @unique @db.VarChar(64)
   url       String   @db.VarChar(512)
   packageId String   @db.Uuid
   package   Package  @relation(fields: [packageId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([packageId, version])
 }
