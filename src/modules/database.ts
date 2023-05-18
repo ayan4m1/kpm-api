@@ -75,18 +75,37 @@ export function updateUser(githubId: string, username: string, email: string) {
   });
 }
 
-export function getUsers(skip?: number) {
-  return prisma.user.findMany({
+export async function getUsers(name?: string, skip?: number) {
+  const where: Prisma.UserWhereInput = {};
+
+  if (name) {
+    where.username = { contains: name };
+  }
+
+  const users = await prisma.user.findMany({
     include: {
       packages: true
     },
-    skip,
-    take: 10
+    skip: skip ?? undefined,
+    take: 10,
+    where
   });
+
+  return omitEach(users, ['email', 'githubId', 'createdAt']);
 }
 
-export function getUser(githubId?: string, uuid?: string) {
-  return prisma.user.findUnique({
+export async function getUser(githubId?: string, uuid?: string) {
+  const where: Prisma.UserWhereUniqueInput = {};
+
+  if (githubId) {
+    where.githubId = githubId;
+  }
+
+  if (uuid) {
+    where.id = uuid;
+  }
+
+  return await prisma.user.findUnique({
     select: {
       id: true,
       githubId: true,
@@ -94,10 +113,7 @@ export function getUser(githubId?: string, uuid?: string) {
       username: true,
       createdAt: true
     },
-    where: {
-      githubId,
-      id: uuid
-    }
+    where
   });
 }
 
@@ -108,15 +124,13 @@ export async function getPackages(
 ) {
   const where: Prisma.PackageWhereInput = {};
 
-  if (!name && !author) {
-    throw new Error('Called with neither name nor author!');
-  }
-
   if (name) {
     where.name = {
       contains: name
     };
-  } else if (author) {
+  }
+
+  if (author) {
     where.user = {
       username: { contains: author }
     };
@@ -127,14 +141,14 @@ export async function getPackages(
       user: true,
       releases: true
     },
-    skip,
+    skip: skip ?? undefined,
     take: 25,
     where
   });
 
   return packages.map((pkg) => ({
     ...omit(pkg, ['userId']),
-    user: omit(pkg.user, ['email', 'createdAt'])
+    user: omit(pkg.user, ['email', 'githubId', 'createdAt'])
   }));
 }
 
@@ -168,13 +182,20 @@ export async function getPackage(
   };
 }
 
-export function getReleases(skip?: number) {
+export function getReleases(packageUuid?: string, skip?: number) {
+  const where: Prisma.ReleaseWhereInput = {};
+
+  if (packageUuid) {
+    where.packageId = packageUuid;
+  }
+
   return prisma.release.findMany({
     include: {
       package: true
     },
-    skip,
-    take: 100
+    skip: skip ?? undefined,
+    take: 100,
+    where
   });
 }
 

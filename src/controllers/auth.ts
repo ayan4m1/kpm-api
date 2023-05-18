@@ -10,7 +10,7 @@ import { getLogger } from '../modules/logging';
 const log = getLogger('controller-auth');
 
 const checkContinueUrl = (continueUrl: string): boolean =>
-  continueUrl?.startsWith(authConfig.uiUrl);
+  continueUrl?.startsWith(encodeURI(authConfig.uiUrl));
 
 export function registerAuthRoutes(app: Express) {
   app.get('/auth', (req: Request, res: Response, next: CallableFunction) => {
@@ -22,7 +22,7 @@ export function registerAuthRoutes(app: Express) {
       return res.sendStatus(400);
     }
 
-    return authenticate({ failWithError: true, state: encodeURI(continueUrl) })(
+    return authenticate({ failWithError: true, state: continueUrl })(
       req,
       res,
       next
@@ -45,19 +45,20 @@ export function registerAuthRoutes(app: Express) {
         log.warn('User had no access token!');
         res.sendStatus(403);
       } else {
-        const continueString = decodeURI(req.query['state'] as string);
+        const continueString = req.query['state'] as string;
+        const continueUri = decodeURI(continueString);
 
         if (!checkContinueUrl(continueString)) {
-          log.error(`Someone tried to redirect to ${continueString}!`);
+          log.error(`Someone tried to redirect to ${continueUri}!`);
           return res.sendStatus(400);
         }
 
-        const continueUrl = new URL(continueString);
+        const continueUrl = new URL(continueUri);
         const queryString = `?token=${result.token}&expiresAt=${formatISO(
           result.expiresAt
         )}`;
 
-        continueUrl.hash = queryString;
+        continueUrl.hash += queryString;
 
         log.info(`Redirecting user to ${continueUrl}`);
         res.redirect(302, continueUrl.toString());
