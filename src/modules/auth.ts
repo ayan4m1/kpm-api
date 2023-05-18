@@ -6,7 +6,7 @@ import { User } from '@prisma/client';
 
 import { github as githubConfig } from '../modules/config';
 import {
-  getUser,
+  getUserInternal,
   createUser,
   updateUser,
   createAccessToken,
@@ -86,7 +86,7 @@ passport.use(
         }
 
         log.debug(`Looking up user ${id}`);
-        let user = await getUser(id);
+        let user = await getUserInternal(id);
 
         if (!user) {
           log.info(`Creating new user ${username} with email ${email}`);
@@ -94,7 +94,7 @@ passport.use(
         } else {
           log.info(`Syncing existing user ${username} with email ${email}`);
           await updateUser(id, username, email);
-          user = await getUser(id);
+          user = await getUserInternal(id);
         }
 
         if (!(await checkAccessToken(accessToken))) {

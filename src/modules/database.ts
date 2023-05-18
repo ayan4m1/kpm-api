@@ -94,7 +94,15 @@ export async function getUsers(name?: string, skip?: number) {
   return omitEach(users, ['email', 'githubId', 'createdAt']);
 }
 
-export async function getUser(githubId?: string, uuid?: string) {
+export function getUserInternal(githubId: string) {
+  return prisma.user.findUnique({
+    where: {
+      githubId
+    }
+  });
+}
+
+export function getUser(githubId?: string, uuid?: string) {
   const where: Prisma.UserWhereUniqueInput = {};
 
   if (githubId) {
@@ -105,13 +113,9 @@ export async function getUser(githubId?: string, uuid?: string) {
     where.id = uuid;
   }
 
-  return await prisma.user.findUnique({
-    select: {
-      id: true,
-      githubId: true,
-      email: true,
-      username: true,
-      createdAt: true
+  return prisma.user.findUnique({
+    include: {
+      packages: true
     },
     where
   });
