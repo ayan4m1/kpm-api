@@ -1,18 +1,17 @@
 import { Express, Request, Response } from 'express';
-import { param, query } from 'express-validator';
+import { query, param, body } from 'express-validator';
 
 import { authenticate } from '../modules/auth';
-import { getUser, getUsers } from '../modules/database';
-import { throwOnValidateError } from '../modules/utils';
+import { getRelease, getReleases } from '../modules/database';
+import { throwOnValidateError, validatePackageName } from '../modules/utils';
 import { getLogger } from '../modules/logging';
 
-const log = getLogger('controller-user');
+const log = getLogger('controller-release');
 
-export function registerUserRoutes(app: Express) {
+export function registerReleaseRoutes(app: Express) {
   app.get(
-    '/users',
+    '/releases',
     query('skip').isNumeric().optional(),
-    throwOnValidateError,
     async (req: Request, res: Response) => {
       try {
         let skip = null;
@@ -21,13 +20,13 @@ export function registerUserRoutes(app: Express) {
           skip = parseInt((req.query['skip'] as string) ?? '0', 10);
         }
 
-        const users = await getUsers(skip);
+        const releases = await getReleases(skip);
 
-        if (!users) {
+        if (!releases) {
           return res.sendStatus(500);
         }
 
-        res.json(users).end();
+        res.json(releases).end();
       } catch (error) {
         log.error(error.message);
         log.error(error.stack);
@@ -37,18 +36,18 @@ export function registerUserRoutes(app: Express) {
   );
 
   app.get(
-    '/user/:uuid',
+    '/release/:uuid',
     param('uuid').isUUID(),
     throwOnValidateError,
     async (req: Request, res: Response) => {
       try {
-        const user = await getUser(req.params['uuid']);
+        const release = await getRelease(req.params['uuid']);
 
-        if (!user) {
+        if (!release) {
           return res.sendStatus(500);
         }
 
-        res.json(user).end();
+        res.json(release).end();
       } catch (error) {
         log.error(error.message);
         log.error(error.stack);
@@ -57,16 +56,19 @@ export function registerUserRoutes(app: Express) {
     }
   );
 
-  app.get(
-    '/user',
+  app.put(
+    '/release',
     authenticate({ failureRedirect: '/auth' }),
+    validatePackageName(body('package_name')),
     async (req: Request, res: Response) => {
       try {
-        const user = req.user as User;
-        const result = await getUser(user?.id);
-
-        return res.json(result).end();
+        // todo: get request files and copy it to disk
+        // todo: ensure package exists (create new if necessary)
+        // todo: do pre-flight checks and commit release
+        res.sendStatus(200).end();
       } catch (error) {
+        log.error(error.message);
+        log.error(error.stack);
         return res.status(500).json(error).end();
       }
     }

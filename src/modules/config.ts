@@ -29,6 +29,7 @@ interface GithubConfig {
 
 interface SessionConfig {
   secret: string;
+  secureCookie: boolean;
   maxCookieAgeHours: number;
 }
 
@@ -63,6 +64,8 @@ export const github: GithubConfig = {
 
 export const session: SessionConfig = {
   secret: process.env.KPM_SESSION_SECRET,
+  secureCookie:
+    process.env.KPM_SESSION_SECURE_COOKIE?.toLowerCase?.() === 'true',
   maxCookieAgeHours: parseInt(
     process.env.KPM_SESSION_MAX_COOKIE_AGE_HOURS ?? '24',
     10

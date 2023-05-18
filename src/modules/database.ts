@@ -1,10 +1,8 @@
-import { AccessToken, Prisma, PrismaClient, User } from '@prisma/client';
-import { addSeconds, isAfter } from 'date-fns';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { addHours, isAfter } from 'date-fns';
 
-import { getLogger } from './logging';
 import { omit, omitEach } from './utils';
 
-const log = getLogger('db');
 const prisma = new PrismaClient();
 
 export function getAccessToken(userId: string) {
@@ -21,7 +19,7 @@ export function getAccessToken(userId: string) {
   });
 }
 
-export async function checkAccessToken(token: string): Promise<boolean> {
+export async function checkAccessToken(token: string) {
   const accessToken = await prisma.accessToken.findUnique({
     where: {
       token
@@ -43,23 +41,19 @@ export async function checkAccessToken(token: string): Promise<boolean> {
 export function createAccessToken(
   userId: string,
   token: string,
-  expiresIn: number
-): Promise<AccessToken> {
+  expiresInHours: number
+) {
   return prisma.accessToken.create({
     data: {
       token,
       userId,
       generator: 'GitHub',
-      expiresAt: addSeconds(Date.now(), expiresIn)
+      expiresAt: addHours(Date.now(), expiresInHours)
     }
   });
 }
 
-export function createUser(
-  githubId: string,
-  username: string,
-  email: string
-): Promise<User> {
+export function createUser(githubId: string, username: string, email: string) {
   return prisma.user.create({
     data: {
       githubId,
@@ -69,11 +63,7 @@ export function createUser(
   });
 }
 
-export function updateUser(
-  githubId: string,
-  username: string,
-  email: string
-): Promise<User> {
+export function updateUser(githubId: string, username: string, email: string) {
   return prisma.user.update({
     where: {
       githubId
@@ -85,59 +75,67 @@ export function updateUser(
   });
 }
 
-export function getUser(githubId: string): Promise<User> {
-  try {
-    return prisma.user.findUnique({
-      select: {
-        id: true,
-        githubId: true,
-        email: true,
-        username: true,
-        createdAt: true
-      },
-      where: {
-        githubId
-      }
-    });
-  } catch (error) {
-    log.error(error.message);
-    log.error(error.stack);
-  }
+export function getUsers(skip?: number) {
+  return prisma.user.findMany({
+    include: {
+      packages: true
+    },
+    skip,
+    take: 10
+  });
 }
 
-export async function getPackages(name?: string, author?: string) {
-  try {
-    const where: Prisma.PackageWhereInput = {};
-
-    if (name) {
-      where.name = {
-        contains: name
-      };
+export function getUser(githubId?: string, uuid?: string) {
+  return prisma.user.findUnique({
+    select: {
+      id: true,
+      githubId: true,
+      email: true,
+      username: true,
+      createdAt: true
+    },
+    where: {
+      githubId,
+      id: uuid
     }
+  });
+}
 
-    if (author) {
-      where.user = {
-        username: { contains: author }
-      };
-    }
+export async function getPackages(
+  name?: string,
+  author?: string,
+  skip?: number
+) {
+  const where: Prisma.PackageWhereInput = {};
 
-    const packages = await prisma.package.findMany({
-      include: {
-        user: true,
-        releases: true
-      },
-      where
-    });
-
-    return packages.map((pkg) => ({
-      ...omit(pkg, ['userId']),
-      user: omit(pkg.user, ['email', 'createdAt']),
-      releases: omitEach(pkg.releases, ['hash'])
-    }));
-  } catch (error) {
-    log.error(error.message);
-    log.error(error.stack);
+  if (!name && !author) {
+    throw new Error('Called with neither name nor author!');
   }
+
+  if (name) {
+    where.name = {
+      contains: name
+    };
+  } else if (author) {
+    where.user = {
+      username: { contains: author }
+    };
+  }
+
+  const packages = await prisma.package.findMany({
+    include: {
+      user: true,
+      releases: true
+    },
+    skip,
+    take: 25,
+    where
+  });
+
+  return packages.map((pkg) => ({
+    ...omit(pkg, ['userId']),
+    user: omit(pkg.user, ['email', 'createdAt'])
+  }));
 }
 
 export async function getPackage(
@@ -145,29 +143,48 @@ export async function getPackage(
   uuid?: string,
   allReleases = false
 ) {
-  try {
-    const pkg = await prisma.package.findUnique({
-      include: {
-        user: true,
-        releases: true
-      },
-      where: {
-        name: name ? name : undefined,
-        id: uuid ? uuid : undefined
-      }
-    });
-
-    if (!pkg) {
-      return null;
-    }
-
-    return {
-      ...omit(pkg, ['userId']),
-      user: omit(pkg.user, ['email', 'createdAt']),
-      releases: omitEach(pkg.releases, ['hash'])
-    };
-  } catch (error) {
-    log.error(error.message);
-    log.error(error.stack);
+  if (!name && !uuid) {
+    throw new Error('Called with neither name nor UUID!');
   }
+
+  const pkg = await prisma.package.findUnique({
+    include: {
+      user: true,
+      releases: allReleases
+    },
+    where: {
+      name: name ? name : undefined,
+      id: uuid ? uuid : undefined
+    }
+  });
+
+  if (!pkg) {
+    return null;
+  }
+
+  return {
+    ...omit(pkg, ['userId']),
+    user: omit(pkg.user, ['email', 'createdAt'])
+  };
+}
+
+export function getReleases(skip?: number) {
+  return prisma.release.findMany({
+    include: {
+      package: true
+    },
+    skip,
+    take: 100
+  });
+}
+
+export function getRelease(uuid: string) {
+  return prisma.release.findUnique({
+    include: {
+      package: true
+    },
+    where: {
+      id: uuid
+    }
+  });
 }

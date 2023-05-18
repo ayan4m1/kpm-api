@@ -21,6 +21,7 @@ export function registerSessionMiddleware(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
+        secure: config.secureCookie,
         maxAge
       }
     })

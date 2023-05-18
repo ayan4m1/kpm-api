@@ -99,7 +99,7 @@ passport.use(
 
         if (!(await checkAccessToken(accessToken))) {
           log.info(`Creating access token for ${username}`);
-          await createAccessToken(user.id, accessToken, 3600);
+          await createAccessToken(user.id, accessToken, 8);
         }
 
         done(null, user);
